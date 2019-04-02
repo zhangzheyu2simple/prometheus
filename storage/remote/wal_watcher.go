@@ -398,7 +398,14 @@ func (w *WALWatcher) garbageCollectSeries(segmentNum int) error {
 	return nil
 }
 
-func (w *WALWatcher) readSegment(r *wal.LiveReader, segmentNum int, tail bool) error {
+// Cover wal.LiveReader and wal.Reader.
+type walReader interface {
+	Next() bool
+	Err() error
+	Record() []byte
+}
+
+func (w *WALWatcher) readSegment(r walReader, segmentNum int, tail bool) error {
 	var (
 		dec     tsdb.RecordDecoder
 		series  []tsdb.RefSeries
@@ -487,8 +494,8 @@ func (w *WALWatcher) readCheckpoint(checkpointDir string) error {
 		return errors.Wrap(err, "getCheckpointSize")
 	}
 
-	r := wal.NewLiveReader(w.logger, sr)
-	if err := w.readSegment(r, index, false); err != io.EOF {
+	r := wal.NewReader(sr)
+	if err := w.readSegment(r, index, false); err != nil && err != io.EOF {
 		return errors.Wrap(err, "readSegment")
 	}
 
