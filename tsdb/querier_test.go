@@ -1031,9 +1031,6 @@ func TestSeriesIterators(t *testing.T) {
 type chunkIteratorCase struct {
 	a, b, c, expected []chunks.Meta
 
-	// Only relevant for some iterators that filters by min and max time.
-	mint, maxt int64
-
 	// Seek being zero means do not test seek.
 	seek        int64
 	seekSuccess bool
@@ -1061,11 +1058,9 @@ func (tc chunkIteratorCase) test(t *testing.T, it ChunkIterator) {
 func TestChunkIterators(t *testing.T) {
 	cases := []chunkIteratorCase{
 		{
-			a:    []chunks.Meta{},
-			b:    []chunks.Meta{},
-			c:    []chunks.Meta{},
-			mint: math.MinInt64,
-			maxt: math.MaxInt64,
+			a: []chunks.Meta{},
+			b: []chunks.Meta{},
+			c: []chunks.Meta{},
 
 			expected: nil,
 		},
@@ -1081,8 +1076,6 @@ func TestChunkIterators(t *testing.T) {
 					sample{7, 89}, sample{9, 8},
 				}),
 			},
-			mint: math.MinInt64,
-			maxt: math.MaxInt64,
 
 			expected: []chunks.Meta{
 				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
@@ -1109,8 +1102,6 @@ func TestChunkIterators(t *testing.T) {
 					sample{10, 22}, sample{203, 3493},
 				}),
 			},
-			mint: math.MinInt64,
-			maxt: math.MaxInt64,
 
 			expected: []chunks.Meta{
 				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
@@ -1147,8 +1138,6 @@ func TestChunkIterators(t *testing.T) {
 				}),
 			},
 			seek: 10,
-			mint: math.MinInt64,
-			maxt: math.MaxInt64,
 
 			seekSuccess: false,
 			expected:    nil,
@@ -1166,8 +1155,6 @@ func TestChunkIterators(t *testing.T) {
 				}),
 			},
 			seek: 2,
-			mint: math.MinInt64,
-			maxt: math.MaxInt64,
 
 			seekSuccess: true,
 			expected: []chunks.Meta{
@@ -1196,8 +1183,6 @@ func TestChunkIterators(t *testing.T) {
 				}),
 			},
 			seek: 10,
-			mint: math.MinInt64,
-			maxt: math.MaxInt64,
 
 			seekSuccess: true,
 			expected: []chunks.Meta{
@@ -1223,8 +1208,6 @@ func TestChunkIterators(t *testing.T) {
 				}),
 			},
 			seek: 203,
-			mint: math.MinInt64,
-			maxt: math.MaxInt64,
 
 			seekSuccess: true,
 			expected: []chunks.Meta{
@@ -1273,8 +1256,6 @@ func TestChunkIterators(t *testing.T) {
 						sample{2, 33}, sample{4, 44}, sample{10, 3},
 					}),
 				},
-				mint: math.MinInt64,
-				maxt: math.MaxInt64,
 
 				expected: []chunks.Meta{
 					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
@@ -1294,8 +1275,6 @@ func TestChunkIterators(t *testing.T) {
 						sample{1, 23}, sample{2, 342}, sample{3, 25}, sample{6, 11},
 					}),
 				},
-				mint: math.MinInt64,
-				maxt: math.MaxInt64,
 
 				expected: []chunks.Meta{
 					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
