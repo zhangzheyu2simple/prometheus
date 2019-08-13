@@ -188,11 +188,11 @@ func expandSeriesIterator(it chunkenc.Iterator) (r []tsdbutil.Sample, err error)
 	return r, it.Err()
 }
 
-func expandChunkIterator(it ChunkIterator) (chks []chunks.Meta) {
+func expandChunkIterator(it ChunkIterator) (chks []chunks.Meta, err error) {
 	for it.Next() {
 		chks = append(chks, it.At())
 	}
-	return chks
+	return chks, it.Err()
 }
 
 type seriesSamples struct {
@@ -663,21 +663,22 @@ func TestBaseChunkSeries(t *testing.T) {
 	}
 }
 
-// TODO: Remove after simpleSeries is merged
 type itSeries struct {
 	si chunkenc.Iterator
+	sc ChunkIterator
 }
 
 func (s itSeries) Iterator() chunkenc.Iterator  { return s.si }
 func (s itSeries) Labels() labels.Labels        { return labels.Labels{} }
-func (s itSeries) ChunkIterator() ChunkIterator { return nil }
+func (s itSeries) ChunkIterator() ChunkIterator { return s.sc }
 
 type iteratorCase struct {
 	a, b, c, expected []tsdbutil.Sample
 
+	// Only relevant for some iterators that filters by min and max time.
 	mint, maxt int64
 
-	// seek is zero means do not test seek.
+	// Seek being zero means do not test seek.
 	seek        int64
 	seekSuccess bool
 }
@@ -701,7 +702,7 @@ func (tc iteratorCase) test(t *testing.T, it chunkenc.Iterator) {
 	testutil.Equals(t, tc.expected, r)
 }
 
-func TestSeriesIterator(t *testing.T) {
+func TestSeriesIterators(t *testing.T) {
 	cases := []iteratorCase{
 		{
 			a:    []tsdbutil.Sample{},
@@ -714,10 +715,7 @@ func TestSeriesIterator(t *testing.T) {
 		},
 		{
 			a: []tsdbutil.Sample{
-				sample{1, 2},
-				sample{2, 3},
-				sample{3, 5},
-				sample{6, 1},
+				sample{1, 2}, sample{2, 3}, sample{3, 5}, sample{6, 1},
 			},
 			b: []tsdbutil.Sample{},
 			c: []tsdbutil.Sample{
@@ -827,6 +825,25 @@ func TestSeriesIterator(t *testing.T) {
 				sample{203, 3493},
 			},
 		},
+		{
+			a: []tsdbutil.Sample{
+				sample{6, 1},
+			},
+			b: []tsdbutil.Sample{
+				sample{9, 8},
+			},
+			c: []tsdbutil.Sample{
+				sample{10, 22}, sample{203, 3493},
+			},
+			seek: -120,
+			mint: math.MinInt64,
+			maxt: math.MaxInt64,
+
+			seekSuccess: true,
+			expected: []tsdbutil.Sample{
+				sample{6, 1}, sample{9, 8}, sample{10, 22}, sample{203, 3493},
+			},
+		},
 	}
 
 	t.Run("Chunk", func(t *testing.T) {
@@ -843,10 +860,7 @@ func TestSeriesIterator(t *testing.T) {
 			},
 			{
 				a: []tsdbutil.Sample{
-					sample{1, 2},
-					sample{2, 3},
-					sample{3, 5},
-					sample{6, 1},
+					sample{1, 2}, sample{2, 3}, sample{3, 5}, sample{6, 1},
 				},
 				b: []tsdbutil.Sample{},
 				c: []tsdbutil.Sample{
@@ -944,9 +958,9 @@ func TestSeriesIterator(t *testing.T) {
 	t.Run("Chain", func(t *testing.T) {
 		for i, tc := range cases {
 			t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
-				a, b, c := itSeries{newListSeriesIterator(tc.a)},
-					itSeries{newListSeriesIterator(tc.b)},
-					itSeries{newListSeriesIterator(tc.c)}
+				a, b, c := itSeries{si: newListSeriesIterator(tc.a)},
+					itSeries{si: newListSeriesIterator(tc.b)},
+					itSeries{si: newListSeriesIterator(tc.c)}
 				tc.test(t, newChainedSeriesIterator(a, b, c))
 			})
 		}
@@ -991,53 +1005,427 @@ func TestSeriesIterator(t *testing.T) {
 		for i, tc := range append(cases, overlappingCases...) {
 			t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
 				a, b, c :=
-					itSeries{newListSeriesIterator(tc.a)},
-					itSeries{newListSeriesIterator(tc.b)},
-					itSeries{newListSeriesIterator(tc.c)}
+					itSeries{si: newListSeriesIterator(tc.a)},
+					itSeries{si: newListSeriesIterator(tc.b)},
+					itSeries{si: newListSeriesIterator(tc.c)}
 				tc.test(t, newVerticalMergeSeriesIterator(a, b, c))
 			})
 		}
 	})
 }
 
-func TestChunkIterator(t *testing.T) {
-	it := &chunkIterator{}
-	testutil.Equals(t, []chunks.Meta(nil), expandChunkIterator(it))
-	testutil.Equals(t, false, it.Next())
+type chunkIteratorCase struct {
+	a, b, c, expected []chunks.Meta
 
-	chks := []chunks.Meta{
-		tsdbutil.ChunkFromSamples([]tsdbutil.Sample{sample{1, 1}, sample{1, 2}}),
-		tsdbutil.ChunkFromSamples([]tsdbutil.Sample{sample{2, 1}, sample{2, 2}}),
-		tsdbutil.ChunkFromSamples([]tsdbutil.Sample{sample{3, 1}, sample{3, 2}}),
-	}
-	it = &chunkIterator{chunks: chks}
-	testutil.Equals(t, chks, expandChunkIterator(it))
-	testutil.Equals(t, false, it.Next())
+	// Only relevant for some iterators that filters by min and max time.
+	mint, maxt int64
+
+	// Seek being zero means do not test seek.
+	seek        int64
+	seekSuccess bool
 }
 
-func TestChainedChunkIterator(t *testing.T) {
-	it := &chainedChunkIterator{}
-	testutil.Equals(t, []chunks.Meta(nil), expandChunkIterator(it))
-	testutil.Equals(t, false, it.Next())
+func (tc chunkIteratorCase) test(t *testing.T, it ChunkIterator) {
+	var r []chunks.Meta
+	if tc.seek != 0 {
+		testutil.Equals(t, tc.seekSuccess, it.Seek(tc.seek))
+		testutil.Equals(t, tc.seekSuccess, it.Seek(tc.seek)) // Next one should be noop.
 
-	chks1 := []chunks.Meta{
-		tsdbutil.ChunkFromSamples([]tsdbutil.Sample{sample{1, 1}, sample{1, 2}}),
-		tsdbutil.ChunkFromSamples([]tsdbutil.Sample{sample{2, 1}, sample{2, 2}}),
-		tsdbutil.ChunkFromSamples([]tsdbutil.Sample{sample{3, 1}, sample{3, 2}}),
+		if tc.seekSuccess {
+			// After successful seek iterator is ready. Grab the value.
+			r = append(r, it.At())
+		}
 	}
-	chks2 := []chunks.Meta(nil)
-	chks3 := []chunks.Meta{
-		tsdbutil.ChunkFromSamples([]tsdbutil.Sample{sample{4, 1}, sample{4, 2}}),
-		tsdbutil.ChunkFromSamples([]tsdbutil.Sample{sample{5, 1}, sample{5, 2}}),
+	expandedResult, err := expandChunkIterator(it)
+	testutil.Ok(t, err)
+
+	r = append(r, expandedResult...)
+	testutil.Equals(t, tc.expected, r)
+}
+
+func TestChunkIterators(t *testing.T) {
+	cases := []chunkIteratorCase{
+		{
+			a:    []chunks.Meta{},
+			b:    []chunks.Meta{},
+			c:    []chunks.Meta{},
+			mint: math.MinInt64,
+			maxt: math.MaxInt64,
+
+			expected: nil,
+		},
+		{
+			a: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{1, 2}, sample{2, 3}, sample{3, 5}, sample{6, 1},
+				}),
+			},
+			b: []chunks.Meta{},
+			c: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{7, 89}, sample{9, 8},
+				}),
+			},
+			mint: math.MinInt64,
+			maxt: math.MaxInt64,
+
+			expected: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{1, 2}, sample{2, 3}, sample{3, 5}, sample{6, 1},
+				}),
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{7, 89}, sample{9, 8},
+				}),
+			},
+		},
+		{
+			a: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{1, 2}, sample{2, 3}, sample{3, 5}, sample{6, 1},
+				}),
+			},
+			b: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{7, 89}, sample{9, 8},
+				}),
+			},
+			c: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{10, 22}, sample{203, 3493},
+				}),
+			},
+			mint: math.MinInt64,
+			maxt: math.MaxInt64,
+
+			expected: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{1, 2}, sample{2, 3}, sample{3, 5}, sample{6, 1},
+				}),
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{7, 89}, sample{9, 8},
+				}),
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{10, 22}, sample{203, 3493},
+				}),
+			},
+		},
+		// Seek cases.
+		{
+			a:    []chunks.Meta{},
+			b:    []chunks.Meta{},
+			c:    []chunks.Meta{},
+			seek: 1,
+
+			seekSuccess: false,
+			expected:    nil,
+		},
+		{
+			a: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{2, 3},
+				}),
+			},
+			b: []chunks.Meta{},
+			c: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{7, 89}, sample{9, 8},
+				}),
+			},
+			seek: 10,
+			mint: math.MinInt64,
+			maxt: math.MaxInt64,
+
+			seekSuccess: false,
+			expected:    nil,
+		},
+		{
+			a: []chunks.Meta{},
+			b: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{1, 2}, sample{3, 5}, sample{6, 1},
+				}),
+			},
+			c: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{7, 89}, sample{9, 8},
+				}),
+			},
+			seek: 2,
+			mint: math.MinInt64,
+			maxt: math.MaxInt64,
+
+			seekSuccess: true,
+			expected: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{3, 5}, sample{6, 1}, sample{7, 89}, sample{9, 8},
+				}),
+			},
+		},
+		{
+			a: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{6, 1},
+				}),
+			},
+			b: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{9, 8},
+				}),
+			},
+			c: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{10, 22}, sample{203, 3493},
+				}),
+			},
+			seek: 10,
+			mint: math.MinInt64,
+			maxt: math.MaxInt64,
+
+			seekSuccess: true,
+			expected: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{10, 22}, sample{203, 3493},
+				}),
+			},
+		},
+		{
+			a: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{6, 1},
+				}),
+			},
+			b: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{9, 8},
+				}),
+			},
+			c: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{10, 22}, sample{203, 3493},
+				}),
+			},
+			seek: 203,
+			mint: math.MinInt64,
+			maxt: math.MaxInt64,
+
+			seekSuccess: true,
+			expected: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{203, 3493},
+				}),
+			},
+		},
 	}
 
-	it = &chainedChunkIterator{chain: []ChunkIterator{
-		&chunkIterator{chunks: chks1},
-		&chunkIterator{chunks: chks2},
-		&chunkIterator{chunks: chks3},
-	}}
-	testutil.Equals(t, append(chks1, chks3...), expandChunkIterator(it))
-	testutil.Equals(t, false, it.Next())
+	t.Run("Simple", func(t *testing.T) {
+		for i, tc := range cases {
+			t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
+				tc.test(t, newChunkIterator(append(append(append([]chunks.Meta{}, tc.a...), tc.b...), tc.c...)))
+			})
+		}
+	})
+
+	t.Run("Chained", func(t *testing.T) {
+		// Only chunk implements time filtering, so add those cases here only.
+		limitedMinMaxtCases := []chunkIteratorCase{
+			{
+				a:    []chunks.Meta{},
+				b:    []chunks.Meta{},
+				c:    []chunks.Meta{},
+				mint: 20,
+				maxt: 21,
+
+				expected: nil,
+			},
+			{
+				a: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{1, 2}, sample{2, 3}, sample{3, 5}, sample{6, 1},
+					}),
+				},
+				b: []chunks.Meta{},
+				c: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{7, 89}, sample{9, 8},
+					}),
+				},
+				mint: 2,
+				maxt: 8,
+
+				expected: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{2, 3}, sample{3, 5}, sample{6, 1}, sample{7, 89},
+					}),
+				},
+			},
+			{
+				a: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{1, 2}, sample{2, 3}, sample{3, 5}, sample{6, 1},
+					}),
+				},
+				b: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{7, 89}, sample{9, 8},
+					}),
+				},
+				c: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{10, 22}, sample{203, 3493},
+					}),
+				},
+				mint: 3,
+				maxt: math.MaxInt64,
+
+				expected: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{3, 5}, sample{6, 1}, sample{7, 89}, sample{9, 8}, sample{10, 22}, sample{203, 3493},
+					}),
+				},
+			},
+			{a: []chunks.Meta{
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{1, 2}, sample{2, 3}, sample{3, 5}, sample{6, 1},
+				}),
+			},
+				b: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{7, 89}, sample{9, 8},
+					}),
+				},
+				c: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{10, 22}, sample{203, 3493},
+					}),
+				},
+				mint: 6,
+				maxt: 10,
+
+				expected: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{6, 1}, sample{7, 89}, sample{9, 8}, sample{10, 22},
+					}),
+				},
+			},
+			// Same with seek.
+			{
+				a: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{6, 1},
+					}),
+				},
+				b: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{9, 8},
+					}),
+				},
+				c: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{10, 22}, sample{203, 3493},
+					}),
+				},
+				seek: 203,
+				mint: 2,
+				maxt: 202,
+
+				seekSuccess: false,
+				expected:    nil,
+			},
+			{
+				a: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{6, 1},
+					}),
+				},
+				b: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{9, 8},
+					}),
+				},
+				c: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{10, 22}, sample{203, 3493},
+					}),
+				},
+				seek: 5,
+				mint: 10,
+				maxt: 202,
+
+				seekSuccess: true,
+				expected:    []chunks.Meta{tsdbutil.ChunkFromSamples([]tsdbutil.Sample{sample{10, 22}})},
+			},
+		}
+		for i, tc := range append(cases, limitedMinMaxtCases...) {
+			t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
+				tc.test(t, &chainedChunkIterator{chain: []ChunkIterator{
+					newChunkIterator(tc.a),
+					newChunkIterator(tc.b),
+					newChunkIterator(tc.c),
+				}})
+			})
+		}
+	})
+
+	t.Run("Vertical", func(t *testing.T) {
+		// Extra cases for overlapping chunks.
+		overlappingCases := []chunkIteratorCase{
+			{
+				a: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{1, 2}, sample{2, 3}, sample{3, 5}, sample{6, 1},
+					}),
+				},
+				b: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{5, 49}, sample{7, 89}, sample{9, 8},
+					}),
+				},
+				c: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{2, 33}, sample{4, 44}, sample{10, 3},
+					}),
+				},
+				mint: math.MinInt64,
+				maxt: math.MaxInt64,
+
+				expected: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{1, 2}, sample{2, 33}, sample{3, 5}, sample{4, 44}, sample{5, 49}, sample{6, 1}, sample{7, 89}, sample{9, 8}, sample{10, 3},
+					}),
+				},
+			},
+			{
+				a: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{1, 2}, sample{2, 3}, sample{9, 5}, sample{13, 1},
+					}),
+				},
+				b: []chunks.Meta{},
+				c: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{1, 23}, sample{2, 342}, sample{3, 25}, sample{6, 11},
+					}),
+				},
+				mint: math.MinInt64,
+				maxt: math.MaxInt64,
+
+				expected: []chunks.Meta{
+					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+						sample{1, 23}, sample{2, 342}, sample{3, 25}, sample{6, 11}, sample{9, 5}, sample{13, 1},
+					}),
+				},
+			},
+		}
+		for i, tc := range append(cases, overlappingCases...) {
+			t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
+				a, b, c :=
+					itSeries{sc: newChunkIterator(tc.a)},
+					itSeries{sc: newChunkIterator(tc.b)},
+					itSeries{sc: newChunkIterator(tc.c)}
+				tc.test(t, newVerticalMergeChunkIterator(a, b, c))
+			})
+		}
+	})
 }
 
 // Regression for: https://github.com/prometheus/tsdb/pull/97
@@ -1077,6 +1465,19 @@ func TestChunkSeriesIterator_SeekInCurrentChunk(t *testing.T) {
 	ts, v = it.At()
 	testutil.Equals(t, int64(5), ts)
 	testutil.Equals(t, float64(6), v)
+}
+
+// Calling Seek() with a time between [mint, maxt] after the iterator had
+// already passed the end would incorrectly return true.
+func TestChunkSeriesIterator_SeekWithMinTime(t *testing.T) {
+	metas := []chunks.Meta{
+		tsdbutil.ChunkFromSamples([]tsdbutil.Sample{sample{1, 6}, sample{5, 6}, sample{7, 8}}),
+	}
+
+	it := newChunkSeriesIterator(metas, nil, 2, 5)
+	testutil.Assert(t, it.Seek(6) == false, "")
+	// A second, within bounds Seek() used to succeed. Make sure it also returns false.
+	testutil.Assert(t, it.Seek(3) == false, "")
 }
 
 // Regression when calling Next() with a time bounded to fit within two samples.
@@ -1460,23 +1861,24 @@ func (it *listSeriesIterator) Next() bool {
 }
 
 func (it *listSeriesIterator) Seek(t int64) bool {
+	if it.idx >= len(it.list)-1 {
+		return false
+	}
+
 	if it.idx == -1 {
 		it.idx = 0
 	}
 
 	// Do binary search between current position and end.
 	pos := sort.Search(len(it.list)-it.idx, func(i int) bool {
-		s := it.list[i+it.idx]
-		return s.T() >= t
+		return t >= it.list[i+it.idx].T()
 	})
 	it.idx += pos
 
 	return it.idx < len(it.list)
 }
 
-func (it *listSeriesIterator) Err() error {
-	return nil
-}
+func (it *listSeriesIterator) Err() error { return nil }
 
 func BenchmarkQueryIterator(b *testing.B) {
 	cases := []struct {

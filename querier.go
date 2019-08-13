@@ -1261,7 +1261,11 @@ func (it *chunkSeriesIterator) resetCurIterator() {
 }
 
 func (it *chunkSeriesIterator) Seek(t int64) bool {
-	if it.Err() != nil || t > it.maxt || it.i > len(it.chunks)-1 {
+	if it.Err() != nil || it.i > len(it.chunks)-1 {
+		return false
+	}
+
+	if t > it.maxt {
 		// Exhaust iterator.
 		it.i = len(it.chunks)
 		return false
@@ -1280,6 +1284,7 @@ func (it *chunkSeriesIterator) Seek(t int64) bool {
 		}
 	}
 
+	// Don't reset the iterator unless we've moved on to a different chunk.
 	if currI != it.i {
 		it.resetCurIterator()
 	}
@@ -1313,22 +1318,17 @@ func (it *chunkSeriesIterator) Next() bool {
 				return false
 			}
 			t, _ = it.At()
-
-			return t <= it.maxt
 		}
-		if t > it.maxt {
-			return false
-		}
-		return true
+		return t <= it.maxt
 	}
 	if err := it.cur.Err(); err != nil {
 		return false
 	}
-	if it.i == len(it.chunks)-1 {
+	it.i++
+	if it.i == len(it.chunks) {
 		return false
 	}
 
-	it.i++
 	it.resetCurIterator()
 
 	return it.Next()
@@ -1401,35 +1401,43 @@ func (s errSeriesSet) Err() error { return s.err }
 
 type chunkIterator struct {
 	chunks []chunks.Meta // series in time order
-	i      int
+	idx    int
 }
 
-func (c *chunkIterator) Seek(t int64) bool {
-	if c.i >= len(c.chunks) {
+func newChunkIterator(chunks []chunks.Meta) *chunkIterator {
+	return &chunkIterator{
+		chunks: chunks,
+		idx:    -1,
+	}
+}
+func (it *chunkIterator) Seek(t int64) bool {
+	if it.idx >= len(it.chunks)-1 {
 		return false
 	}
 
-	for c.Next() {
-		if t >= c.At().MinTime {
-			return true
-		}
+	if it.idx == -1 {
+		it.idx = 0
 	}
-	return false
+
+	// Do binary search between current position and end.
+	pos := sort.Search(len(it.chunks)-it.idx, func(i int) bool {
+		return t >= it.chunks[i+it.idx].MinTime
+	})
+	it.idx += pos
+
+	return it.idx < len(it.chunks)
 }
 
-func (c *chunkIterator) Next() bool {
-	if c.i >= len(c.chunks) {
-		return false
-	}
-	c.i++
-	return true
+func (it *chunkIterator) Next() bool {
+	it.idx++
+	return it.idx < len(it.chunks)
 }
 
-func (c *chunkIterator) At() chunks.Meta {
-	return c.chunks[c.i-1]
+func (it *chunkIterator) At() chunks.Meta {
+	return it.chunks[it.idx]
 }
 
-func (c *chunkIterator) Err() error { return nil }
+func (it *chunkIterator) Err() error { return nil }
 
 // chainedChunkIterator implements flat iteration for chunks iterated over a list
 // of time-sorted, non-overlapping iterators for each series.
