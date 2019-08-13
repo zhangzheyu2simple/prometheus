@@ -1618,7 +1618,7 @@ func newMemSeries(lset labels.Labels, id uint64, chunkRange int64) *memSeries {
 		chunkRange: chunkRange,
 		nextAt:     math.MinInt64,
 		// This is to make sure iterator.At without advancing returns default values.
-		sampleBuf:  [4]sample{{math.MinInt64, 0}, {math.MinInt64, 0}, {math.MinInt64, 0}, {math.MinInt64, 0}},
+		sampleBuf: [4]sample{{math.MinInt64, 0}, {math.MinInt64, 0}, {math.MinInt64, 0}, {math.MinInt64, 0}},
 	}
 	return s
 }

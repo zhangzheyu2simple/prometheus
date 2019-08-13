@@ -684,6 +684,10 @@ type iteratorCase struct {
 }
 
 func (tc iteratorCase) test(t *testing.T, it chunkenc.Iterator) {
+	tv, v := it.At()
+	testutil.Equals(t, int64(math.MinInt64), tv)
+	testutil.Equals(t, float64(0), v)
+
 	var r []tsdbutil.Sample
 	if tc.seek != 0 {
 		testutil.Equals(t, tc.seekSuccess, it.Seek(tc.seek))
@@ -845,6 +849,16 @@ func TestSeriesIterators(t *testing.T) {
 			},
 		},
 	}
+
+	// To make sure we can properly test things, listSeriesIterator has to work properly as well, even if created
+	// for testing purposes.
+	t.Run("TestList", func(t *testing.T) {
+		for i, tc := range cases {
+			t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
+				tc.test(t, newListSeriesIterator(append(append(append([]tsdbutil.Sample{}, tc.a...), tc.b...), tc.c...)))
+			})
+		}
+	})
 
 	t.Run("Chunk", func(t *testing.T) {
 		// Only chunk implements time filtering, so add those cases here only.
@@ -1026,6 +1040,7 @@ type chunkIteratorCase struct {
 }
 
 func (tc chunkIteratorCase) test(t *testing.T, it ChunkIterator) {
+	testutil.Equals(t, chunks.Meta{}, it.At())
 	var r []chunks.Meta
 	if tc.seek != 0 {
 		testutil.Equals(t, tc.seekSuccess, it.Seek(tc.seek))
@@ -1157,7 +1172,10 @@ func TestChunkIterators(t *testing.T) {
 			seekSuccess: true,
 			expected: []chunks.Meta{
 				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-					sample{3, 5}, sample{6, 1}, sample{7, 89}, sample{9, 8},
+					sample{1, 2}, sample{3, 5}, sample{6, 1},
+				}),
+				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
+					sample{7, 89}, sample{9, 8},
 				}),
 			},
 		},
@@ -1211,7 +1229,7 @@ func TestChunkIterators(t *testing.T) {
 			seekSuccess: true,
 			expected: []chunks.Meta{
 				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-					sample{203, 3493},
+					sample{10, 22}, sample{203, 3493},
 				}),
 			},
 		},
@@ -1226,136 +1244,7 @@ func TestChunkIterators(t *testing.T) {
 	})
 
 	t.Run("Chained", func(t *testing.T) {
-		// Only chunk implements time filtering, so add those cases here only.
-		limitedMinMaxtCases := []chunkIteratorCase{
-			{
-				a:    []chunks.Meta{},
-				b:    []chunks.Meta{},
-				c:    []chunks.Meta{},
-				mint: 20,
-				maxt: 21,
-
-				expected: nil,
-			},
-			{
-				a: []chunks.Meta{
-					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-						sample{1, 2}, sample{2, 3}, sample{3, 5}, sample{6, 1},
-					}),
-				},
-				b: []chunks.Meta{},
-				c: []chunks.Meta{
-					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-						sample{7, 89}, sample{9, 8},
-					}),
-				},
-				mint: 2,
-				maxt: 8,
-
-				expected: []chunks.Meta{
-					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-						sample{2, 3}, sample{3, 5}, sample{6, 1}, sample{7, 89},
-					}),
-				},
-			},
-			{
-				a: []chunks.Meta{
-					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-						sample{1, 2}, sample{2, 3}, sample{3, 5}, sample{6, 1},
-					}),
-				},
-				b: []chunks.Meta{
-					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-						sample{7, 89}, sample{9, 8},
-					}),
-				},
-				c: []chunks.Meta{
-					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-						sample{10, 22}, sample{203, 3493},
-					}),
-				},
-				mint: 3,
-				maxt: math.MaxInt64,
-
-				expected: []chunks.Meta{
-					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-						sample{3, 5}, sample{6, 1}, sample{7, 89}, sample{9, 8}, sample{10, 22}, sample{203, 3493},
-					}),
-				},
-			},
-			{a: []chunks.Meta{
-				tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-					sample{1, 2}, sample{2, 3}, sample{3, 5}, sample{6, 1},
-				}),
-			},
-				b: []chunks.Meta{
-					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-						sample{7, 89}, sample{9, 8},
-					}),
-				},
-				c: []chunks.Meta{
-					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-						sample{10, 22}, sample{203, 3493},
-					}),
-				},
-				mint: 6,
-				maxt: 10,
-
-				expected: []chunks.Meta{
-					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-						sample{6, 1}, sample{7, 89}, sample{9, 8}, sample{10, 22},
-					}),
-				},
-			},
-			// Same with seek.
-			{
-				a: []chunks.Meta{
-					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-						sample{6, 1},
-					}),
-				},
-				b: []chunks.Meta{
-					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-						sample{9, 8},
-					}),
-				},
-				c: []chunks.Meta{
-					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-						sample{10, 22}, sample{203, 3493},
-					}),
-				},
-				seek: 203,
-				mint: 2,
-				maxt: 202,
-
-				seekSuccess: false,
-				expected:    nil,
-			},
-			{
-				a: []chunks.Meta{
-					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-						sample{6, 1},
-					}),
-				},
-				b: []chunks.Meta{
-					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-						sample{9, 8},
-					}),
-				},
-				c: []chunks.Meta{
-					tsdbutil.ChunkFromSamples([]tsdbutil.Sample{
-						sample{10, 22}, sample{203, 3493},
-					}),
-				},
-				seek: 5,
-				mint: 10,
-				maxt: 202,
-
-				seekSuccess: true,
-				expected:    []chunks.Meta{tsdbutil.ChunkFromSamples([]tsdbutil.Sample{sample{10, 22}})},
-			},
-		}
-		for i, tc := range append(cases, limitedMinMaxtCases...) {
+		for i, tc := range cases {
 			t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
 				tc.test(t, &chainedChunkIterator{chain: []ChunkIterator{
 					newChunkIterator(tc.a),
@@ -1367,7 +1256,6 @@ func TestChunkIterators(t *testing.T) {
 	})
 
 	t.Run("Vertical", func(t *testing.T) {
-		// Extra cases for overlapping chunks.
 		overlappingCases := []chunkIteratorCase{
 			{
 				a: []chunks.Meta{
@@ -1851,6 +1739,9 @@ func newListSeriesIterator(list []tsdbutil.Sample) *listSeriesIterator {
 }
 
 func (it *listSeriesIterator) At() (int64, float64) {
+	if it.idx == -1 {
+		return math.MinInt64, 0
+	}
 	s := it.list[it.idx]
 	return s.T(), s.V()
 }
@@ -1861,17 +1752,17 @@ func (it *listSeriesIterator) Next() bool {
 }
 
 func (it *listSeriesIterator) Seek(t int64) bool {
-	if it.idx >= len(it.list)-1 {
+	if it.idx >= len(it.list) {
 		return false
 	}
 
-	if it.idx == -1 {
-		it.idx = 0
+	if it.idx == -1 && !it.Next() {
+		return false
 	}
 
 	// Do binary search between current position and end.
 	pos := sort.Search(len(it.list)-it.idx, func(i int) bool {
-		return t >= it.list[i+it.idx].T()
+		return t <= it.list[i+it.idx].T()
 	})
 	it.idx += pos
 

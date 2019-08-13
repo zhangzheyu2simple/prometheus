@@ -894,7 +894,9 @@ func (s *chunkSeries) Iterator() chunkenc.Iterator {
 }
 
 func (s *chunkSeries) ChunkIterator() ChunkIterator {
-	return &chunkIterator{chunks: s.chunks}
+	// TODO(bwplotka): This is wrong. We probably have to be strict in terms of min/maxt and tombstones.
+	// Maybe ChunkIterator should return dranges as separate method? Or rewrite chunks here to apply deleted time ranges?
+	return newChunkIterator(s.chunks)
 }
 
 // chainedSeries implements a series for a list of time-sorted series.
@@ -1009,13 +1011,15 @@ func newVerticalMergeSeriesIterator(s ...Series) chunkenc.Iterator {
 		return s[0].Iterator()
 	} else if len(s) == 2 {
 		return &verticalMergeSeriesIterator{
-			a: s[0].Iterator(),
-			b: s[1].Iterator(),
+			a:    s[0].Iterator(),
+			b:    s[1].Iterator(),
+			curT: math.MinInt64,
 		}
 	}
 	return &verticalMergeSeriesIterator{
-		a: s[0].Iterator(),
-		b: newVerticalMergeSeriesIterator(s[1:]...),
+		a:    s[0].Iterator(),
+		b:    newVerticalMergeSeriesIterator(s[1:]...),
+		curT: math.MinInt64,
 	}
 }
 
@@ -1198,6 +1202,10 @@ func mergeOverlappingChunks(a, b chunks.Meta, aReuseIter, bReuseIter chunkenc.It
 }
 
 func (it *verticalMergeChunkIterator) Seek(t int64) bool {
+	if it.initialized && it.curMeta.MaxTime >= t {
+		return true
+	}
+
 	it.aok, it.bok = it.a.Seek(t), it.b.Seek(t)
 	it.initialized = true
 	return it.Next()
@@ -1410,22 +1418,12 @@ func newChunkIterator(chunks []chunks.Meta) *chunkIterator {
 		idx:    -1,
 	}
 }
-func (it *chunkIterator) Seek(t int64) bool {
-	if it.idx >= len(it.chunks)-1 {
-		return false
-	}
 
+func (it *chunkIterator) At() chunks.Meta {
 	if it.idx == -1 {
-		it.idx = 0
+		return chunks.Meta{}
 	}
-
-	// Do binary search between current position and end.
-	pos := sort.Search(len(it.chunks)-it.idx, func(i int) bool {
-		return t >= it.chunks[i+it.idx].MinTime
-	})
-	it.idx += pos
-
-	return it.idx < len(it.chunks)
+	return it.chunks[it.idx]
 }
 
 func (it *chunkIterator) Next() bool {
@@ -1433,8 +1431,22 @@ func (it *chunkIterator) Next() bool {
 	return it.idx < len(it.chunks)
 }
 
-func (it *chunkIterator) At() chunks.Meta {
-	return it.chunks[it.idx]
+func (it *chunkIterator) Seek(t int64) bool {
+	if it.idx >= len(it.chunks) {
+		return false
+	}
+
+	if it.idx == -1 && !it.Next() {
+		return false
+	}
+
+	// Do binary search between current position and end.
+	pos := sort.Search(len(it.chunks)-it.idx, func(i int) bool {
+		return t <= it.chunks[i+it.idx].MaxTime
+	})
+	it.idx += pos
+
+	return it.idx < len(it.chunks)
 }
 
 func (it *chunkIterator) Err() error { return nil }
