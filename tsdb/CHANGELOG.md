@@ -1,7 +1,7 @@
 ## master / unreleased
 
 - [CHANGE] `chunks.MergeOverlappingChunks` moved to `tsdb.MergeOverlappingChunks`
-- [CHANGE] `Series` interface allows return chunk iterator that allows iterating over encoded chunks.
+- [CHANGE]  Added `ChunkIterator` method to the `Series` interface which returns a `ChunkIterator` that allows iterating over encoded chunks.
 
 ## 0.10.0
 

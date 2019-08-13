@@ -65,7 +65,7 @@ type ChunkIterator interface {
 	// Seek advances the iterator forward to the given timestamp.
 	// It advances to the chunk with min time at t or first chunk with min time after t.
 	Seek(t int64) bool
-	// At returns the meta.
+	// At returns the current meta.
 	At() chunks.Meta
 	// Next advances the iterator by one.
 	Next() bool
