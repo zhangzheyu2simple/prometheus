@@ -39,11 +39,12 @@ import (
 const (
 	// We track samples in/out and how long pushes take using an Exponentially
 	// Weighted Moving Average.
-	ewmaWeight          = 0.2
-	shardUpdateDuration = 10 * time.Second
+	ewmaWeight = 0.2
 
 	// Allow 30% too many shards before scaling down.
 	shardToleranceFraction = 0.3
+
+	defaultShardUpdateDuration = 10 * time.Second
 )
 
 var (
@@ -207,11 +208,12 @@ type QueueManager struct {
 	seriesSegmentIndexes map[uint64]int
 	droppedSeries        map[uint64]struct{}
 
-	shards      *shards
-	numShards   int
-	reshardChan chan int
-	quit        chan struct{}
-	wg          sync.WaitGroup
+	shards              *shards
+	numShards           int
+	shardUpdateDuration time.Duration
+	reshardChan         chan int
+	quit                chan struct{}
+	wg                  sync.WaitGroup
 
 	samplesIn, samplesDropped, samplesOut, samplesOutDuration *ewmaRate
 	integralAccumulator                                       float64
@@ -234,7 +236,7 @@ type QueueManager struct {
 }
 
 // NewQueueManager builds a new QueueManager.
-func NewQueueManager(reg prometheus.Registerer, logger log.Logger, walDir string, samplesIn *ewmaRate, cfg config.QueueConfig, externalLabels labels.Labels, relabelConfigs []*relabel.Config, client StorageClient, flushDeadline time.Duration) *QueueManager {
+func NewQueueManager(reg prometheus.Registerer, logger log.Logger, walDir string, samplesIn *ewmaRate, cfg config.QueueConfig, externalLabels labels.Labels, relabelConfigs []*relabel.Config, client StorageClient, flushDeadline time.Duration, shardUpdateDuration time.Duration) *QueueManager {
 	if logger == nil {
 		logger = log.NewNopLogger()
 	}
@@ -485,7 +487,7 @@ func processExternalLabels(ls labels.Labels, externalLabels labels.Labels) label
 func (t *QueueManager) updateShardsLoop() {
 	defer t.wg.Done()
 
-	ticker := time.NewTicker(shardUpdateDuration)
+	ticker := time.NewTicker(t.shardUpdateDuration)
 	defer ticker.Stop()
 	for {
 		select {

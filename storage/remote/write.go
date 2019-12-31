@@ -66,7 +66,7 @@ func NewWriteStorage(logger log.Logger, walDir string, flushDeadline time.Durati
 		queues:        make(map[string]*QueueManager),
 		logger:        logger,
 		flushDeadline: flushDeadline,
-		samplesIn:     newEWMARate(ewmaWeight, shardUpdateDuration),
+		samplesIn:     newEWMARate(ewmaWeight, defaultShardUpdateDuration),
 		walDir:        walDir,
 	}
 	go rws.run()
@@ -74,7 +74,7 @@ func NewWriteStorage(logger log.Logger, walDir string, flushDeadline time.Durati
 }
 
 func (rws *WriteStorage) run() {
-	ticker := time.NewTicker(shardUpdateDuration)
+	ticker := time.NewTicker(defaultShardUpdateDuration)
 	defer ticker.Stop()
 	for range ticker.C {
 		rws.samplesIn.tick()
@@ -157,6 +157,7 @@ func (rws *WriteStorage) ApplyConfig(conf *config.Config) error {
 			rwConf.WriteRelabelConfigs,
 			c,
 			rws.flushDeadline,
+			defaultShardUpdateDuration,
 		)
 		// Keep track of which queues are new so we know which to start.
 		newHashes = append(newHashes, hash)
