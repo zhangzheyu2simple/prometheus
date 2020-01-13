@@ -34,11 +34,17 @@ import (
 	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/pkg/timestamp"
 	pb "github.com/prometheus/prometheus/prompb"
+	"github.com/prometheus/prometheus/promql"
+
+	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/tsdb"
 )
 
 // API encapsulates all API services.
 type API struct {
+	engine  *promql.Engine
+	storage storage.Storage
+
 	enableAdmin bool
 	db          func() *tsdb.DB
 }
@@ -47,15 +53,21 @@ type API struct {
 func New(
 	db func() *tsdb.DB,
 	enableAdmin bool,
+	engine *promql.Engine,
+	storage storage.Storage,
 ) *API {
 	return &API{
 		db:          db,
 		enableAdmin: enableAdmin,
+		engine:      engine,
+		storage:     storage,
 	}
 }
 
 // RegisterGRPC registers all API services with the given server.
 func (api *API) RegisterGRPC(srv *grpc.Server) {
+	fmt.Println("regis")
+	pb.RegisterApiServer(srv, NewQueryServer(api.engine, api.storage))
 	if api.enableAdmin {
 		pb.RegisterAdminServer(srv, NewAdmin(api.db))
 	} else {
@@ -220,4 +232,71 @@ func (s *Admin) DeleteSeries(_ context.Context, r *pb.SeriesDeleteRequest) (*pb.
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return &pb.SeriesDeleteResponse{}, nil
+}
+
+// NewAdmin returns a Admin server.
+func NewQueryServer(qe *promql.Engine, q storage.Queryable) *QueryServer {
+	return &QueryServer{
+		QueryEngine: qe,
+		Queryable:   q,
+	}
+}
+
+type QueryServer struct {
+	QueryEngine *promql.Engine
+	Queryable   storage.Queryable
+}
+
+func (q *QueryServer) RangeQuery(ctx context.Context, in *pb.RangeQueryRequest) (*pb.RangeQueryResponse, error) {
+	start, end, err := extractTimeRange(in.Start, in.End)
+
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	ts := *in.Step
+	fmt.Println(start, end, ts)
+	qry, err := q.QueryEngine.NewRangeQuery(q.Queryable, in.Query, start, end, ts)
+
+	if err != nil {
+		return nil, status.Error(codes.Aborted, err.Error())
+	}
+
+	res := qry.Exec(ctx)
+	if res.Err != nil {
+		return nil, status.Error(codes.Internal, res.Err.Error())
+	}
+	fmt.Println(res.Value.Type())
+	fmt.Println(res.Value)
+	//Optional stats field in response if parameter "stats" is not empty.
+	resp := pb.RangeQueryResponse{
+		VauleType: string(res.Value.Type()),
+	}
+	switch t := res.Value.Type(); t {
+	case promql.ValueTypeMatrix:
+		matrix := res.Value.(promql.Matrix)
+		fmt.Println(matrix)
+		resp.Matrix = generateProtoMatrix(matrix)
+	}
+
+	return &resp, nil
+
+}
+
+func generateProtoMatrix(matrix promql.Matrix) *pb.Matrix {
+	seriesArray := make([]*pb.TimeSeries, len(matrix))
+	for index, series := range matrix {
+		labels := make([]pb.Label, len(series.Metric))
+		for j, label := range series.Metric {
+			labels[j] = pb.Label{Name: label.Name, Value: label.Value}
+		}
+		samples := make([]pb.Sample, len(series.Points))
+		for k, point := range series.Points {
+			samples[k] = pb.Sample{Value: point.V, Timestamp: point.T}
+		}
+
+		pbSeries := pb.TimeSeries{Labels: labels, Samples: samples}
+		seriesArray[index] = &pbSeries
+	}
+	return &pb.Matrix{Series: seriesArray}
 }

@@ -526,6 +526,8 @@ func (h *Handler) Run(ctx context.Context) error {
 	av2 := api_v2.New(
 		h.options.TSDB,
 		h.options.EnableAdminAPI,
+		h.options.QueryEngine,
+		h.options.Storage,
 	)
 	av2.RegisterGRPC(grpcSrv)
 
