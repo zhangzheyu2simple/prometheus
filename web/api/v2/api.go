@@ -247,6 +247,36 @@ type QueryServer struct {
 	Queryable   storage.Queryable
 }
 
+func (q *QueryServer) InstantQuery(ctx context.Context, in *pb.InstantQueryRequest) (*pb.InstantQueryResponse, error) {
+	var ts time.Time
+	if in.TimeStamp != nil {
+		ts = *in.TimeStamp
+	} else {
+		ts = time.Now()
+	}
+
+	qry, err := q.QueryEngine.NewInstantQuery(q.Queryable, in.Query, ts)
+	if err != nil {
+		err = errors.Wrapf(err, "invalid parameter 'query'")
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	res := qry.Exec(ctx)
+	if res.Err != nil {
+		return nil, status.Error(codes.Internal, res.Err.Error())
+	}
+	resp := pb.InstantQueryResponse{
+		VauleType: string(res.Value.Type()),
+	}
+	switch t := res.Value.Type(); t {
+	case promql.ValueTypeMatrix:
+		matrix := res.Value.(promql.Matrix)
+		resp.Matrix = generateProtoMatrix(matrix)
+	case promql.ValueTypeVector:
+		vector := res.Value.(promql.Vector)
+		resp.Vector = generateProtoVector(vector)
+	}
+	return &resp, nil
+}
 func (q *QueryServer) RangeQuery(ctx context.Context, in *pb.RangeQueryRequest) (*pb.RangeQueryResponse, error) {
 	start, end, err := extractTimeRange(in.Start, in.End)
 
@@ -259,15 +289,14 @@ func (q *QueryServer) RangeQuery(ctx context.Context, in *pb.RangeQueryRequest) 
 	qry, err := q.QueryEngine.NewRangeQuery(q.Queryable, in.Query, start, end, ts)
 
 	if err != nil {
-		return nil, status.Error(codes.Aborted, err.Error())
+		err = errors.Wrapf(err, "invalid parameter 'query'")
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	res := qry.Exec(ctx)
 	if res.Err != nil {
 		return nil, status.Error(codes.Internal, res.Err.Error())
 	}
-	fmt.Println(res.Value.Type())
-	fmt.Println(res.Value)
 	//Optional stats field in response if parameter "stats" is not empty.
 	resp := pb.RangeQueryResponse{
 		VauleType: string(res.Value.Type()),
@@ -299,4 +328,16 @@ func generateProtoMatrix(matrix promql.Matrix) *pb.Matrix {
 		seriesArray[index] = &pbSeries
 	}
 	return &pb.Matrix{Series: seriesArray}
+}
+func generateProtoVector(vector promql.Vector) *pb.Vector {
+	labeledSamples := make([]*pb.LabeledSample, len(vector))
+	for index, sample := range vector {
+		labels := make([]pb.Label, len(sample.Metric))
+		for j, label := range sample.Metric {
+			labels[j] = pb.Label{Name: label.Name, Value: label.Value}
+		}
+		labeledSample := pb.LabeledSample{Labels: labels, Point: pb.Sample{Value: sample.V, Timestamp: sample.T}}
+		labeledSamples[index] = &labeledSample
+	}
+	return &pb.Vector{Samples: labeledSamples}
 }

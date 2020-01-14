@@ -25,6 +25,14 @@ import "gogoproto/gogo.proto";
 message Matrix {
   repeated prometheus.TimeSeries series = 1;
 }
+message Vector{
+  repeated LabeledSample samples=1;
+}
+message LabeledSample{
+  prometheus.Sample point=1 [(gogoproto.nullable) = false];
+  repeated prometheus.Label Labels=2 [(gogoproto.nullable) = false];
+
+}
 message RangeQueryRequest{
     google.protobuf.Timestamp start = 1 [(gogoproto.stdtime) = true];
     google.protobuf.Timestamp end = 2 [(gogoproto.stdtime) = true];
@@ -35,11 +43,19 @@ message RangeQueryResponse{
     string vaule_type = 1  ;  
     Matrix matrix =2;
 }
-
+message InstantQueryRequest{
+    google.protobuf.Timestamp time_stamp = 1 [(gogoproto.stdtime) = true];
+    string query =2;
+}
+message InstantQueryResponse{
+    string vaule_type = 1  ;  
+    Matrix matrix =2;
+    Vector vector=3;
+}
 service Api {
   // Snapshot creates a snapshot of all current data into 'snapshots/<datetime>-<rand>' under the TSDB's data directory.
-  rpc RangeQuery(RangeQueryRequest) returns (RangeQueryResponse) {
-  }
+  rpc RangeQuery(RangeQueryRequest) returns (RangeQueryResponse) {}
+  rpc InstantQuery(InstantQueryRequest) returns(InstantQueryResponse){}
 }
 
 

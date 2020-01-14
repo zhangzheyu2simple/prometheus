@@ -32,6 +32,155 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
+type Matrix struct {
+	Series               []*TimeSeries `protobuf:"bytes,1,rep,name=series,proto3" json:"series,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
+}
+
+func (m *Matrix) Reset()         { *m = Matrix{} }
+func (m *Matrix) String() string { return proto.CompactTextString(m) }
+func (*Matrix) ProtoMessage()    {}
+func (*Matrix) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{0}
+}
+func (m *Matrix) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Matrix) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Matrix.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Matrix) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Matrix.Merge(m, src)
+}
+func (m *Matrix) XXX_Size() int {
+	return m.Size()
+}
+func (m *Matrix) XXX_DiscardUnknown() {
+	xxx_messageInfo_Matrix.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Matrix proto.InternalMessageInfo
+
+func (m *Matrix) GetSeries() []*TimeSeries {
+	if m != nil {
+		return m.Series
+	}
+	return nil
+}
+
+type Vector struct {
+	Samples              []*LabeledSample `protobuf:"bytes,1,rep,name=samples,proto3" json:"samples,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
+}
+
+func (m *Vector) Reset()         { *m = Vector{} }
+func (m *Vector) String() string { return proto.CompactTextString(m) }
+func (*Vector) ProtoMessage()    {}
+func (*Vector) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{1}
+}
+func (m *Vector) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Vector) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Vector.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Vector) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Vector.Merge(m, src)
+}
+func (m *Vector) XXX_Size() int {
+	return m.Size()
+}
+func (m *Vector) XXX_DiscardUnknown() {
+	xxx_messageInfo_Vector.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Vector proto.InternalMessageInfo
+
+func (m *Vector) GetSamples() []*LabeledSample {
+	if m != nil {
+		return m.Samples
+	}
+	return nil
+}
+
+type LabeledSample struct {
+	Point                Sample   `protobuf:"bytes,1,opt,name=point,proto3" json:"point"`
+	Labels               []Label  `protobuf:"bytes,2,rep,name=Labels,proto3" json:"Labels"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *LabeledSample) Reset()         { *m = LabeledSample{} }
+func (m *LabeledSample) String() string { return proto.CompactTextString(m) }
+func (*LabeledSample) ProtoMessage()    {}
+func (*LabeledSample) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{2}
+}
+func (m *LabeledSample) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *LabeledSample) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_LabeledSample.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *LabeledSample) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LabeledSample.Merge(m, src)
+}
+func (m *LabeledSample) XXX_Size() int {
+	return m.Size()
+}
+func (m *LabeledSample) XXX_DiscardUnknown() {
+	xxx_messageInfo_LabeledSample.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LabeledSample proto.InternalMessageInfo
+
+func (m *LabeledSample) GetPoint() Sample {
+	if m != nil {
+		return m.Point
+	}
+	return Sample{}
+}
+
+func (m *LabeledSample) GetLabels() []Label {
+	if m != nil {
+		return m.Labels
+	}
+	return nil
+}
+
 type RangeQueryRequest struct {
 	Start                *time.Time     `protobuf:"bytes,1,opt,name=start,proto3,stdtime" json:"start,omitempty"`
 	End                  *time.Time     `protobuf:"bytes,2,opt,name=end,proto3,stdtime" json:"end,omitempty"`
@@ -46,7 +195,7 @@ func (m *RangeQueryRequest) Reset()         { *m = RangeQueryRequest{} }
 func (m *RangeQueryRequest) String() string { return proto.CompactTextString(m) }
 func (*RangeQueryRequest) ProtoMessage()    {}
 func (*RangeQueryRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_00212fb1f9d3bf1c, []int{0}
+	return fileDescriptor_00212fb1f9d3bf1c, []int{3}
 }
 func (m *RangeQueryRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -115,7 +264,7 @@ func (m *RangeQueryResponse) Reset()         { *m = RangeQueryResponse{} }
 func (m *RangeQueryResponse) String() string { return proto.CompactTextString(m) }
 func (*RangeQueryResponse) ProtoMessage()    {}
 func (*RangeQueryResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_00212fb1f9d3bf1c, []int{1}
+	return fileDescriptor_00212fb1f9d3bf1c, []int{4}
 }
 func (m *RangeQueryResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -158,25 +307,26 @@ func (m *RangeQueryResponse) GetMatrix() *Matrix {
 	return nil
 }
 
-type Matrix struct {
-	Series               []*TimeSeries `protobuf:"bytes,1,rep,name=series,proto3" json:"series,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
-	XXX_unrecognized     []byte        `json:"-"`
-	XXX_sizecache        int32         `json:"-"`
+type InstantQueryRequest struct {
+	TimeStamp            *time.Time `protobuf:"bytes,1,opt,name=time_stamp,json=timeStamp,proto3,stdtime" json:"time_stamp,omitempty"`
+	Query                string     `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
 }
 
-func (m *Matrix) Reset()         { *m = Matrix{} }
-func (m *Matrix) String() string { return proto.CompactTextString(m) }
-func (*Matrix) ProtoMessage()    {}
-func (*Matrix) Descriptor() ([]byte, []int) {
-	return fileDescriptor_00212fb1f9d3bf1c, []int{2}
+func (m *InstantQueryRequest) Reset()         { *m = InstantQueryRequest{} }
+func (m *InstantQueryRequest) String() string { return proto.CompactTextString(m) }
+func (*InstantQueryRequest) ProtoMessage()    {}
+func (*InstantQueryRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{5}
 }
-func (m *Matrix) XXX_Unmarshal(b []byte) error {
+func (m *InstantQueryRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *Matrix) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *InstantQueryRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_Matrix.Marshal(b, m, deterministic)
+		return xxx_messageInfo_InstantQueryRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -186,57 +336,141 @@ func (m *Matrix) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *Matrix) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Matrix.Merge(m, src)
+func (m *InstantQueryRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_InstantQueryRequest.Merge(m, src)
 }
-func (m *Matrix) XXX_Size() int {
+func (m *InstantQueryRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *Matrix) XXX_DiscardUnknown() {
-	xxx_messageInfo_Matrix.DiscardUnknown(m)
+func (m *InstantQueryRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_InstantQueryRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Matrix proto.InternalMessageInfo
+var xxx_messageInfo_InstantQueryRequest proto.InternalMessageInfo
 
-func (m *Matrix) GetSeries() []*TimeSeries {
+func (m *InstantQueryRequest) GetTimeStamp() *time.Time {
 	if m != nil {
-		return m.Series
+		return m.TimeStamp
+	}
+	return nil
+}
+
+func (m *InstantQueryRequest) GetQuery() string {
+	if m != nil {
+		return m.Query
+	}
+	return ""
+}
+
+type InstantQueryResponse struct {
+	VauleType            string   `protobuf:"bytes,1,opt,name=vaule_type,json=vauleType,proto3" json:"vaule_type,omitempty"`
+	Matrix               *Matrix  `protobuf:"bytes,2,opt,name=matrix,proto3" json:"matrix,omitempty"`
+	Vector               *Vector  `protobuf:"bytes,3,opt,name=vector,proto3" json:"vector,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *InstantQueryResponse) Reset()         { *m = InstantQueryResponse{} }
+func (m *InstantQueryResponse) String() string { return proto.CompactTextString(m) }
+func (*InstantQueryResponse) ProtoMessage()    {}
+func (*InstantQueryResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_00212fb1f9d3bf1c, []int{6}
+}
+func (m *InstantQueryResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *InstantQueryResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_InstantQueryResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *InstantQueryResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_InstantQueryResponse.Merge(m, src)
+}
+func (m *InstantQueryResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *InstantQueryResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_InstantQueryResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_InstantQueryResponse proto.InternalMessageInfo
+
+func (m *InstantQueryResponse) GetVauleType() string {
+	if m != nil {
+		return m.VauleType
+	}
+	return ""
+}
+
+func (m *InstantQueryResponse) GetMatrix() *Matrix {
+	if m != nil {
+		return m.Matrix
+	}
+	return nil
+}
+
+func (m *InstantQueryResponse) GetVector() *Vector {
+	if m != nil {
+		return m.Vector
 	}
 	return nil
 }
 
 func init() {
+	proto.RegisterType((*Matrix)(nil), "prometheus.Matrix")
+	proto.RegisterType((*Vector)(nil), "prometheus.Vector")
+	proto.RegisterType((*LabeledSample)(nil), "prometheus.LabeledSample")
 	proto.RegisterType((*RangeQueryRequest)(nil), "prometheus.RangeQueryRequest")
 	proto.RegisterType((*RangeQueryResponse)(nil), "prometheus.RangeQueryResponse")
-	proto.RegisterType((*Matrix)(nil), "prometheus.Matrix")
+	proto.RegisterType((*InstantQueryRequest)(nil), "prometheus.InstantQueryRequest")
+	proto.RegisterType((*InstantQueryResponse)(nil), "prometheus.InstantQueryResponse")
 }
 
 func init() { proto.RegisterFile("api.proto", fileDescriptor_00212fb1f9d3bf1c) }
 
 var fileDescriptor_00212fb1f9d3bf1c = []byte{
-	// 351 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x91, 0xb1, 0x6a, 0xeb, 0x30,
-	0x14, 0x86, 0xaf, 0xae, 0x1d, 0x83, 0x4f, 0xa6, 0x2b, 0xc2, 0xc5, 0x35, 0xc4, 0x09, 0x9e, 0x42,
-	0x07, 0x07, 0x1c, 0x28, 0x5d, 0x1b, 0xba, 0x66, 0xa8, 0x9b, 0xa9, 0x4b, 0x70, 0xc8, 0xa9, 0x6b,
-	0x88, 0x2d, 0x45, 0x92, 0x4b, 0xf3, 0x16, 0x1d, 0xfb, 0x48, 0xa5, 0x53, 0xdf, 0xa0, 0x25, 0x4f,
-	0x52, 0x24, 0x39, 0x24, 0x34, 0x14, 0xba, 0x49, 0xe7, 0xff, 0x7e, 0xf4, 0xff, 0x3a, 0xe0, 0xe7,
-	0xbc, 0x4c, 0xb8, 0x60, 0x8a, 0x51, 0xe0, 0x82, 0x55, 0xa8, 0x1e, 0xb0, 0x91, 0xe1, 0xa0, 0x60,
-	0xac, 0x58, 0xe3, 0xd8, 0x28, 0xcb, 0xe6, 0x7e, 0xac, 0xca, 0x0a, 0xa5, 0xca, 0x2b, 0x6e, 0xe1,
-	0x30, 0xfa, 0x0e, 0xac, 0x1a, 0x91, 0xab, 0x92, 0xd5, 0xad, 0xde, 0x55, 0x5b, 0x8e, 0xb2, 0xbd,
-	0xf4, 0x0a, 0x56, 0x30, 0x73, 0x1c, 0xeb, 0x93, 0x9d, 0xc6, 0x6f, 0x04, 0xfe, 0x65, 0x79, 0x5d,
-	0xe0, 0x4d, 0x83, 0x62, 0x9b, 0xe1, 0xa6, 0x41, 0xa9, 0xe8, 0x05, 0x74, 0xa4, 0xca, 0x85, 0x0a,
-	0xc8, 0x90, 0x8c, 0xba, 0x69, 0x98, 0xd8, 0x87, 0x92, 0xfd, 0x43, 0xc9, 0x7c, 0x9f, 0x64, 0xea,
-	0x3e, 0x7f, 0x0c, 0x48, 0x66, 0x71, 0x9a, 0x82, 0x83, 0xf5, 0x2a, 0xf8, 0xfb, 0x4b, 0x97, 0x86,
-	0xe9, 0x04, 0x5c, 0xa9, 0x90, 0x07, 0x8e, 0x31, 0x9d, 0x9d, 0x98, 0xae, 0xdb, 0x4e, 0x53, 0xf7,
-	0x45, 0x7b, 0x0c, 0x4c, 0x7b, 0xd0, 0xd9, 0xe8, 0xc0, 0x81, 0x3b, 0x24, 0x23, 0x3f, 0xb3, 0x97,
-	0x78, 0x01, 0xf4, 0xb8, 0x8b, 0xe4, 0xac, 0x96, 0x48, 0xfb, 0x00, 0x8f, 0x79, 0xb3, 0xc6, 0x85,
-	0xfe, 0x0d, 0xd3, 0xc8, 0xcf, 0x7c, 0x33, 0x99, 0x6f, 0x39, 0xd2, 0x73, 0xf0, 0xaa, 0x5c, 0x89,
-	0xf2, 0xa9, 0x8d, 0x4d, 0x93, 0xc3, 0x0a, 0x92, 0x99, 0x51, 0xb2, 0x96, 0x88, 0x2f, 0xc1, 0xb3,
-	0x13, 0x9a, 0x80, 0x27, 0x51, 0x94, 0x28, 0x03, 0x32, 0x74, 0x46, 0xdd, 0xf4, 0xff, 0xb1, 0x4b,
-	0xf7, 0xbc, 0x35, 0x6a, 0xd6, 0x52, 0xe9, 0x1c, 0x9c, 0x2b, 0x5e, 0xd2, 0x19, 0xc0, 0x21, 0x21,
-	0xed, 0x1f, 0x9b, 0x4e, 0xb6, 0x10, 0x46, 0x3f, 0xc9, 0xb6, 0x58, 0xfc, 0x67, 0xda, 0x7b, 0xdd,
-	0x45, 0xe4, 0x7d, 0x17, 0x91, 0xcf, 0x5d, 0x44, 0xee, 0x3c, 0x8d, 0xf3, 0xe5, 0xd2, 0x33, 0x7f,
-	0x37, 0xf9, 0x0a, 0x00, 0x00, 0xff, 0xff, 0xd2, 0xb8, 0x82, 0xf4, 0x57, 0x02, 0x00, 0x00,
+	// 506 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x92, 0xcd, 0x8a, 0x13, 0x4f,
+	0x14, 0xc5, 0xa7, 0xf2, 0xd1, 0x7f, 0x72, 0xf3, 0x77, 0x31, 0x65, 0x90, 0x9e, 0xc0, 0x24, 0xa1,
+	0x57, 0xc1, 0x45, 0x07, 0x12, 0x10, 0x37, 0x22, 0x06, 0x37, 0x82, 0xb3, 0xb0, 0x32, 0xb8, 0x70,
+	0x13, 0x2a, 0xe6, 0x1a, 0x1b, 0xba, 0xbb, 0x6a, 0xba, 0xaa, 0x07, 0xf3, 0x10, 0x82, 0x4b, 0x5f,
+	0xc1, 0x37, 0x19, 0x5c, 0xf9, 0x04, 0x2a, 0x79, 0x12, 0xa9, 0x8f, 0x98, 0x6e, 0xe3, 0xc0, 0x2c,
+	0xdc, 0x55, 0xd5, 0xfd, 0x9d, 0xba, 0x75, 0x4e, 0x5d, 0xe8, 0x70, 0x99, 0xc4, 0xb2, 0x10, 0x5a,
+	0x50, 0x90, 0x85, 0xc8, 0x50, 0xbf, 0xc7, 0x52, 0xf5, 0xbb, 0x7a, 0x2b, 0x51, 0xb9, 0x42, 0x7f,
+	0xb8, 0x11, 0x62, 0x93, 0xe2, 0xc4, 0xee, 0x56, 0xe5, 0xbb, 0x89, 0x4e, 0x32, 0x54, 0x9a, 0x67,
+	0xd2, 0x03, 0x83, 0x3f, 0x81, 0x75, 0x59, 0x70, 0x9d, 0x88, 0xdc, 0xd7, 0x7b, 0x1b, 0xb1, 0x11,
+	0x76, 0x39, 0x31, 0x2b, 0x77, 0x1a, 0x3d, 0x86, 0xe0, 0x82, 0xeb, 0x22, 0xf9, 0x40, 0x63, 0x08,
+	0x14, 0x16, 0x09, 0xaa, 0x90, 0x8c, 0x9a, 0xe3, 0xee, 0xf4, 0x41, 0x7c, 0x78, 0x4a, 0x7c, 0x99,
+	0x64, 0xb8, 0xb0, 0x55, 0xe6, 0xa9, 0xe8, 0x09, 0x04, 0xaf, 0xf1, 0xad, 0x16, 0x05, 0x9d, 0xc1,
+	0x7f, 0x8a, 0x67, 0x32, 0xfd, 0x2d, 0x3d, 0xab, 0x4a, 0x5f, 0xf2, 0x15, 0xa6, 0xb8, 0x5e, 0x58,
+	0x82, 0xed, 0xc9, 0x48, 0xc2, 0xbd, 0x5a, 0x85, 0xc6, 0xd0, 0x96, 0x22, 0xc9, 0x75, 0x48, 0x46,
+	0x64, 0xdc, 0x9d, 0xd2, 0xea, 0x1d, 0x0e, 0x99, 0xb7, 0x6e, 0xbe, 0x0f, 0x4f, 0x98, 0xc3, 0xe8,
+	0x04, 0x02, 0x7b, 0x81, 0x0a, 0x1b, 0xb6, 0xe9, 0xe9, 0x51, 0x53, 0xcf, 0x7b, 0x2c, 0xfa, 0x4a,
+	0xe0, 0x94, 0xf1, 0x7c, 0x83, 0xaf, 0x4a, 0x2c, 0xb6, 0x0c, 0xaf, 0x4a, 0x54, 0x9a, 0x3e, 0x82,
+	0xb6, 0xd2, 0xbc, 0xd8, 0xb7, 0xed, 0xc7, 0x2e, 0xc6, 0x78, 0x1f, 0xa3, 0xb5, 0x6e, 0x73, 0x9e,
+	0xb7, 0x3e, 0xfd, 0x18, 0x12, 0xe6, 0x70, 0x3a, 0x85, 0x26, 0xe6, 0xeb, 0xb0, 0x71, 0x47, 0x95,
+	0x81, 0xe9, 0x0c, 0x5a, 0x4a, 0xa3, 0x0c, 0x9b, 0x56, 0x74, 0x76, 0x24, 0x7a, 0xee, 0x7f, 0x6c,
+	0xde, 0xfa, 0x6c, 0x34, 0x16, 0xa6, 0x3d, 0x68, 0x5f, 0x99, 0x07, 0x87, 0xad, 0x11, 0x19, 0x77,
+	0x98, 0xdb, 0x44, 0x4b, 0xa0, 0x55, 0x2f, 0x4a, 0x8a, 0x5c, 0x21, 0x3d, 0x07, 0xb8, 0xe6, 0x65,
+	0x8a, 0x4b, 0x33, 0x39, 0xd6, 0x51, 0x87, 0x75, 0xec, 0xc9, 0xe5, 0x56, 0x22, 0x7d, 0x08, 0x41,
+	0x66, 0x3f, 0xdb, 0x3f, 0xbb, 0x96, 0xb1, 0x1b, 0x03, 0xe6, 0x89, 0x28, 0x85, 0xfb, 0x2f, 0x72,
+	0xa5, 0x79, 0xae, 0x6b, 0x71, 0x3d, 0x05, 0x30, 0x83, 0xb7, 0xb4, 0xde, 0xee, 0x9c, 0x59, 0xc7,
+	0x68, 0x16, 0xe6, 0xe0, 0x60, 0xa7, 0x51, 0xb5, 0xf3, 0x91, 0x40, 0xaf, 0xde, 0xee, 0x9f, 0x3b,
+	0x32, 0xec, 0xb5, 0x1d, 0x58, 0x9f, 0x7f, 0x8d, 0x75, 0xa3, 0xcc, 0x3c, 0x31, 0xfd, 0x42, 0xa0,
+	0xf9, 0x4c, 0x26, 0xf4, 0x02, 0xe0, 0x10, 0x33, 0x3d, 0xaf, 0x2a, 0x8e, 0x46, 0xa9, 0x3f, 0xb8,
+	0xad, 0xec, 0xbc, 0x44, 0x27, 0x74, 0x01, 0xff, 0x57, 0x5d, 0xd2, 0x61, 0x55, 0xf1, 0x97, 0xb8,
+	0xfb, 0xa3, 0xdb, 0x81, 0xfd, 0xa5, 0xf3, 0xde, 0xcd, 0x6e, 0x40, 0xbe, 0xed, 0x06, 0xe4, 0xe7,
+	0x6e, 0x40, 0xde, 0x04, 0x46, 0x20, 0x57, 0xab, 0xc0, 0x7e, 0xc6, 0xec, 0x57, 0x00, 0x00, 0x00,
+	0xff, 0xff, 0xdc, 0x94, 0x14, 0x9b, 0x5c, 0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -253,6 +487,7 @@ const _ = grpc.SupportPackageIsVersion4
 type ApiClient interface {
 	// Snapshot creates a snapshot of all current data into 'snapshots/<datetime>-<rand>' under the TSDB's data directory.
 	RangeQuery(ctx context.Context, in *RangeQueryRequest, opts ...grpc.CallOption) (*RangeQueryResponse, error)
+	InstantQuery(ctx context.Context, in *InstantQueryRequest, opts ...grpc.CallOption) (*InstantQueryResponse, error)
 }
 
 type apiClient struct {
@@ -272,10 +507,20 @@ func (c *apiClient) RangeQuery(ctx context.Context, in *RangeQueryRequest, opts 
 	return out, nil
 }
 
+func (c *apiClient) InstantQuery(ctx context.Context, in *InstantQueryRequest, opts ...grpc.CallOption) (*InstantQueryResponse, error) {
+	out := new(InstantQueryResponse)
+	err := c.cc.Invoke(ctx, "/prometheus.Api/InstantQuery", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ApiServer is the server API for Api service.
 type ApiServer interface {
 	// Snapshot creates a snapshot of all current data into 'snapshots/<datetime>-<rand>' under the TSDB's data directory.
 	RangeQuery(context.Context, *RangeQueryRequest) (*RangeQueryResponse, error)
+	InstantQuery(context.Context, *InstantQueryRequest) (*InstantQueryResponse, error)
 }
 
 // UnimplementedApiServer can be embedded to have forward compatible implementations.
@@ -284,6 +529,9 @@ type UnimplementedApiServer struct {
 
 func (*UnimplementedApiServer) RangeQuery(ctx context.Context, req *RangeQueryRequest) (*RangeQueryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RangeQuery not implemented")
+}
+func (*UnimplementedApiServer) InstantQuery(ctx context.Context, req *InstantQueryRequest) (*InstantQueryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InstantQuery not implemented")
 }
 
 func RegisterApiServer(s *grpc.Server, srv ApiServer) {
@@ -308,6 +556,24 @@ func _Api_RangeQuery_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Api_InstantQuery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InstantQueryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ApiServer).InstantQuery(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/prometheus.Api/InstantQuery",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ApiServer).InstantQuery(ctx, req.(*InstantQueryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Api_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "prometheus.Api",
 	HandlerType: (*ApiServer)(nil),
@@ -316,9 +582,146 @@ var _Api_serviceDesc = grpc.ServiceDesc{
 			MethodName: "RangeQuery",
 			Handler:    _Api_RangeQuery_Handler,
 		},
+		{
+			MethodName: "InstantQuery",
+			Handler:    _Api_InstantQuery_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "api.proto",
+}
+
+func (m *Matrix) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Matrix) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Matrix) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if len(m.Series) > 0 {
+		for iNdEx := len(m.Series) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Series[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintApi(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Vector) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Vector) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Vector) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if len(m.Samples) > 0 {
+		for iNdEx := len(m.Samples) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Samples[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintApi(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *LabeledSample) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *LabeledSample) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *LabeledSample) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if len(m.Labels) > 0 {
+		for iNdEx := len(m.Labels) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Labels[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintApi(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	{
+		size, err := m.Point.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintApi(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
 }
 
 func (m *RangeQueryRequest) Marshal() (dAtA []byte, err error) {
@@ -353,32 +756,32 @@ func (m *RangeQueryRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		dAtA[i] = 0x22
 	}
 	if m.Step != nil {
-		n1, err1 := github_com_gogo_protobuf_types.StdDurationMarshalTo(*m.Step, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdDuration(*m.Step):])
-		if err1 != nil {
-			return 0, err1
-		}
-		i -= n1
-		i = encodeVarintApi(dAtA, i, uint64(n1))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if m.End != nil {
-		n2, err2 := github_com_gogo_protobuf_types.StdTimeMarshalTo(*m.End, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(*m.End):])
+		n2, err2 := github_com_gogo_protobuf_types.StdDurationMarshalTo(*m.Step, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdDuration(*m.Step):])
 		if err2 != nil {
 			return 0, err2
 		}
 		i -= n2
 		i = encodeVarintApi(dAtA, i, uint64(n2))
 		i--
-		dAtA[i] = 0x12
+		dAtA[i] = 0x1a
 	}
-	if m.Start != nil {
-		n3, err3 := github_com_gogo_protobuf_types.StdTimeMarshalTo(*m.Start, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(*m.Start):])
+	if m.End != nil {
+		n3, err3 := github_com_gogo_protobuf_types.StdTimeMarshalTo(*m.End, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(*m.End):])
 		if err3 != nil {
 			return 0, err3
 		}
 		i -= n3
 		i = encodeVarintApi(dAtA, i, uint64(n3))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Start != nil {
+		n4, err4 := github_com_gogo_protobuf_types.StdTimeMarshalTo(*m.Start, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(*m.Start):])
+		if err4 != nil {
+			return 0, err4
+		}
+		i -= n4
+		i = encodeVarintApi(dAtA, i, uint64(n4))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -431,7 +834,7 @@ func (m *RangeQueryResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Matrix) Marshal() (dAtA []byte, err error) {
+func (m *InstantQueryRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -441,12 +844,12 @@ func (m *Matrix) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Matrix) MarshalTo(dAtA []byte) (int, error) {
+func (m *InstantQueryRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *Matrix) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *InstantQueryRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -455,19 +858,80 @@ func (m *Matrix) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i -= len(m.XXX_unrecognized)
 		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if len(m.Series) > 0 {
-		for iNdEx := len(m.Series) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Series[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintApi(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0xa
+	if len(m.Query) > 0 {
+		i -= len(m.Query)
+		copy(dAtA[i:], m.Query)
+		i = encodeVarintApi(dAtA, i, uint64(len(m.Query)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.TimeStamp != nil {
+		n6, err6 := github_com_gogo_protobuf_types.StdTimeMarshalTo(*m.TimeStamp, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(*m.TimeStamp):])
+		if err6 != nil {
+			return 0, err6
 		}
+		i -= n6
+		i = encodeVarintApi(dAtA, i, uint64(n6))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *InstantQueryResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *InstantQueryResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *InstantQueryResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if m.Vector != nil {
+		{
+			size, err := m.Vector.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Matrix != nil {
+		{
+			size, err := m.Matrix.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.VauleType) > 0 {
+		i -= len(m.VauleType)
+		copy(dAtA[i:], m.VauleType)
+		i = encodeVarintApi(dAtA, i, uint64(len(m.VauleType)))
+		i--
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -483,6 +947,62 @@ func encodeVarintApi(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *Matrix) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Series) > 0 {
+		for _, e := range m.Series {
+			l = e.Size()
+			n += 1 + l + sovApi(uint64(l))
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *Vector) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Samples) > 0 {
+		for _, e := range m.Samples {
+			l = e.Size()
+			n += 1 + l + sovApi(uint64(l))
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *LabeledSample) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.Point.Size()
+	n += 1 + l + sovApi(uint64(l))
+	if len(m.Labels) > 0 {
+		for _, e := range m.Labels {
+			l = e.Size()
+			n += 1 + l + sovApi(uint64(l))
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
 func (m *RangeQueryRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -531,17 +1051,43 @@ func (m *RangeQueryResponse) Size() (n int) {
 	return n
 }
 
-func (m *Matrix) Size() (n int) {
+func (m *InstantQueryRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.Series) > 0 {
-		for _, e := range m.Series {
-			l = e.Size()
-			n += 1 + l + sovApi(uint64(l))
-		}
+	if m.TimeStamp != nil {
+		l = github_com_gogo_protobuf_types.SizeOfStdTime(*m.TimeStamp)
+		n += 1 + l + sovApi(uint64(l))
+	}
+	l = len(m.Query)
+	if l > 0 {
+		n += 1 + l + sovApi(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *InstantQueryResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.VauleType)
+	if l > 0 {
+		n += 1 + l + sovApi(uint64(l))
+	}
+	if m.Matrix != nil {
+		l = m.Matrix.Size()
+		n += 1 + l + sovApi(uint64(l))
+	}
+	if m.Vector != nil {
+		l = m.Vector.Size()
+		n += 1 + l + sovApi(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -554,6 +1100,303 @@ func sovApi(x uint64) (n int) {
 }
 func sozApi(x uint64) (n int) {
 	return sovApi(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *Matrix) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Matrix: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Matrix: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Series", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Series = append(m.Series, &TimeSeries{})
+			if err := m.Series[len(m.Series)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Vector) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Vector: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Vector: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Samples", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Samples = append(m.Samples, &LabeledSample{})
+			if err := m.Samples[len(m.Samples)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *LabeledSample) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: LabeledSample: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: LabeledSample: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Point", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Point.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Labels", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Labels = append(m.Labels, Label{})
+			if err := m.Labels[len(m.Labels)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *RangeQueryRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -871,7 +1714,7 @@ func (m *RangeQueryResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Matrix) Unmarshal(dAtA []byte) error {
+func (m *InstantQueryRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -894,15 +1737,15 @@ func (m *Matrix) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Matrix: wiretype end group for non-group")
+			return fmt.Errorf("proto: InstantQueryRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Matrix: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: InstantQueryRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Series", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field TimeStamp", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -929,8 +1772,200 @@ func (m *Matrix) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Series = append(m.Series, &TimeSeries{})
-			if err := m.Series[len(m.Series)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if m.TimeStamp == nil {
+				m.TimeStamp = new(time.Time)
+			}
+			if err := github_com_gogo_protobuf_types.StdTimeUnmarshal(m.TimeStamp, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Query", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Query = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *InstantQueryResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: InstantQueryResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: InstantQueryResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VauleType", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.VauleType = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Matrix", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Matrix == nil {
+				m.Matrix = &Matrix{}
+			}
+			if err := m.Matrix.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Vector", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Vector == nil {
+				m.Vector = &Vector{}
+			}
+			if err := m.Vector.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
